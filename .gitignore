@@ -1,3 +1,9 @@
+.classpath
+.gradle
 .idea
-mod-mailer.iml
+.project
+.settings
+*.iml
+bin
+build
 out
