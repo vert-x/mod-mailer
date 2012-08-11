@@ -50,6 +50,7 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
   private boolean auth;
   private String username;
   private String password;
+  private String contentType;
 
   @Override
   public void start() {
@@ -61,6 +62,7 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
     auth = getOptionalBooleanConfig("auth", false);
     username = getOptionalStringConfig("username", null);
     password = getOptionalStringConfig("password", null);
+    contentType = getOptionalStringConfig("content_type", "text/plain");
 
     eb.registerHandler(address, this);
 
@@ -178,7 +180,7 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
       msg.setRecipients(javax.mail.Message.RecipientType.CC, cc);
       msg.setRecipients(javax.mail.Message.RecipientType.BCC, bcc);
       msg.setSubject(subject);
-      msg.setText(body);
+      msg.setContent(body, contentType);
       msg.setSentDate(new Date());
       transport.send(msg);
       sendOK(message);
