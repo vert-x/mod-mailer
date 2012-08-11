@@ -21,7 +21,7 @@ The mailer module requires the following configuration:
         "ssl": <ssl>,
         "auth": <auth>,
         "username": <username>,
-        "password": <password>
+        "password": <password>,
         "content_type": <content_type>
     }
 
