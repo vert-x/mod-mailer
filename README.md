@@ -21,25 +21,27 @@ The mailer module requires the following configuration:
         "ssl": <ssl>,
         "auth": <auth>,
         "username": <username>,
-        "password": <password>   
+        "password": <password>,
+        "content_type": <content_type>
     }
-      
+
 Let's take a look at each field in turn:
 
 * `address` The main address for the busmod. Every busmod has a main address.
-* `host` Host name or ip address of the maile server instance. Defaults to `localhost`.
+* `host` Host name or ip address of the mail server instance. Defaults to `localhost`.
 * `port` Port at which the mail server is listening. Defaults to `25`.
 * `ssl` If `true` then use ssl, otherwise don't use ssl. Default is `false`.
 * `auth` If `true` use authentication, otherwise don't use authentication. Default is `false`.
 * `username` If using authentication, the username. Default is `null`.
 * `password` If using authentication, the password. Default is `null`.
- 
+* `content_type` If you want to send HTML email body, then set to `text/html`. Default is `text/plain`.
+
 For example, to send to a local server on port 25:
 
     {
         "address": "test.my_mailer"
-    }  
-    
+    }
+
 Or to a gmail account:
 
     {
@@ -50,15 +52,15 @@ Or to a gmail account:
         "auth": true,
         "username": "tim",
         "password": "password"
-    } 
-    
+    }
+
 ## Sending Emails
 
 To send an email just send a JSON message to the main address of the mailer. The JSON message representing the email should have the following structure:
 
     {
         "from": <from>,
-        "to": <to|to_list>,        
+        "to": <to|to_list>,
         "cc": <cc|cc_list>
         "bcc": <bcc|bcc_list>
         "subject": <subject>
@@ -78,7 +80,7 @@ For example, to send a mail to a single recipient:
 
     {
         "from": "tim@wibble.com",
-        "to": "bob@wobble.com",                
+        "to": "bob@wobble.com",
         "subject": "Congratulations on your new armadillo!",
         "body": "Dear Bob, great to here you have purchased......"
     }
@@ -87,7 +89,7 @@ Or to send to multiple recipients:
 
     {
         "from": "tim@wibble.com",
-        "to": ["bob@wobble.com", "jane@tribble.com"],                
+        "to": ["bob@wobble.com", "jane@tribble.com"],
         "subject": "Sadly, my aardvark George, has been arrested.",
         "body": "All, I'm afraid George was found...."
     }
