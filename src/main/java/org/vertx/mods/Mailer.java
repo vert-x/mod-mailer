@@ -69,13 +69,13 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
     Properties props = new Properties();
     props.put("mail.transport.protocol", "smtp");
     props.put("mail.smtp.host", host);
-    props.put("mail.smtp.socketFactory.port", port);
+    props.put("mail.smtp.socketFactory.port", Integer.toString(port));
     if (ssl) {
       props.put("mail.smtp.socketFactory.class",
         "javax.net.ssl.SSLSocketFactory");
     }
-    props.put("mail.smtp.socketFactory.fallback", false);
-    props.put("mail.smtp.auth", String.valueOf(auth));
+    props.put("mail.smtp.socketFactory.fallback", Boolean.toString(false));
+    props.put("mail.smtp.auth", Boolean.toString(auth));
     //props.put("mail.smtp.quitwait", "false");
 
     session = Session.getInstance(props,
