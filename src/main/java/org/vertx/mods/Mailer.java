@@ -51,6 +51,7 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
   private String username;
   private String password;
   private String contentType;
+  private boolean fake;
 
   @Override
   public void start() {
@@ -63,41 +64,46 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
     username = getOptionalStringConfig("username", null);
     password = getOptionalStringConfig("password", null);
     contentType = getOptionalStringConfig("content_type", "text/plain");
+    fake = getOptionalBooleanConfig("fake", false);
 
     eb.registerHandler(address, this);
 
-    Properties props = new Properties();
-    props.put("mail.transport.protocol", "smtp");
-    props.put("mail.smtp.host", host);
-    props.put("mail.smtp.socketFactory.port", Integer.toString(port));
-    if (ssl) {
-      props.put("mail.smtp.socketFactory.class",
-        "javax.net.ssl.SSLSocketFactory");
-    }
-    props.put("mail.smtp.socketFactory.fallback", Boolean.toString(false));
-    props.put("mail.smtp.auth", Boolean.toString(auth));
-    //props.put("mail.smtp.quitwait", "false");
+    if (!fake) {
+      Properties props = new Properties();
+      props.put("mail.transport.protocol", "smtp");
+      props.put("mail.smtp.host", host);
+      props.put("mail.smtp.socketFactory.port", Integer.toString(port));
+      if (ssl) {
+        props.put("mail.smtp.socketFactory.class",
+          "javax.net.ssl.SSLSocketFactory");
+      }
+      props.put("mail.smtp.socketFactory.fallback", Boolean.toString(false));
+      props.put("mail.smtp.auth", Boolean.toString(auth));
+      //props.put("mail.smtp.quitwait", "false");
 
-    session = Session.getInstance(props,
-        new javax.mail.Authenticator() {
-          protected PasswordAuthentication getPasswordAuthentication() {
-            return new PasswordAuthentication(username, password);
-          }
-        });
-    //session.setDebug(true);
+      session = Session.getInstance(props,
+          new javax.mail.Authenticator() {
+            protected PasswordAuthentication getPasswordAuthentication() {
+              return new PasswordAuthentication(username, password);
+            }
+          });
+      //session.setDebug(true);
 
-    try {
-      transport = session.getTransport();
-      transport.connect();
-    } catch (MessagingException e) {
-      logger.error("Failed to setup mail transport", e);
+      try {
+        transport = session.getTransport();
+        transport.connect();
+      } catch (MessagingException e) {
+        logger.error("Failed to setup mail transport", e);
+      }
     }
   }
 
   @Override
   public void stop() {
     try {
-      transport.close();
+      if (transport != null) {
+        transport.close();
+      }
     } catch (MessagingException e) {
       logger.error("Failed to stop mail transport", e);
     }
@@ -182,10 +188,11 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
       msg.setSubject(subject);
       msg.setContent(body, contentType);
       msg.setSentDate(new Date());
-      transport.send(msg);
+      if (!fake) {
+        transport.send(msg);
+      }
       sendOK(message);
     } catch (MessagingException e) {
-
       sendError(message, "Failed to send message", e);
     } catch (Throwable t) {
       t.printStackTrace();

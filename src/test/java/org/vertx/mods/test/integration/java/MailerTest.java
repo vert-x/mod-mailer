@@ -1,58 +1,44 @@
-package vertx.mods.tests.verticles;
+package org.vertx.mods.test.integration.java;
 
-/*
- * Copyright 2011-2012 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+import org.junit.Test;
 import org.vertx.java.core.Handler;
+import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.eventbus.Message;
+import org.vertx.java.core.http.HttpClient;
+import org.vertx.java.core.http.HttpClientResponse;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.framework.TestClientBase;
+import org.vertx.testtools.TestVerticle;
+
+import static org.vertx.testtools.VertxAssert.*;
 
 /**
- * @author <a href="http://tfox.org">Tim Fox</a>
+ *
  */
-public class TestClient extends TestClientBase {
+public class MailerTest extends TestVerticle {
 
   @Override
   public void start() {
-    super.start();
-    JsonObject config = new JsonObject();
-    config.putString("address", "test.mailer");
-    container.deployModule("vertx.mailer-v" + System.getProperty("vertx.version"), config, 1, new Handler<String>() {
-      public void handle(String res) {
-        tu.appReady();
+    JsonObject conf = new JsonObject();
+    conf.putString("address", "test.mailer").putBoolean("fake", true);
+    container.deployModule(System.getProperty("vertx.modulename"), conf, new Handler<String>() {
+      @Override
+      public void handle(String deploymentID) {
+        assertNotNull("deploymentID should not be null", deploymentID);
+        MailerTest.super.start();
       }
     });
   }
 
-  @Override
-  public void stop() {
-    super.stop();
-  }
-
+  @Test
   public void testSendMultiple() throws Exception {
     final int numMails = 10;
     Handler<Message<JsonObject>> replyHandler = new Handler<Message<JsonObject>>() {
       int count;
       public void handle(Message<JsonObject> message) {
-        tu.checkContext();
-        tu.azzert(message.body.getString("status").equals("ok"));
+        assertEquals("ok", message.body.getString("status"));
         if (++count == numMails) {
-          tu.testComplete();
+          testComplete();
         }
       }
     };
@@ -62,12 +48,14 @@ public class TestClient extends TestClientBase {
     }
   }
 
+  @Test
   public void testSendWithSingleRecipient() throws Exception {
     String rec = System.getProperty("user.name") + "@localhost";
     JsonObject jsonObject = new JsonObject().putString("to", rec);
     sendWithOverrides(jsonObject, null);
   }
 
+  @Test
   public void testSendWithRecipientList() throws Exception {
     String rec = System.getProperty("user.name") + "@localhost";
     JsonArray recipients = new JsonArray(new String[] { rec, rec, rec });
@@ -75,12 +63,14 @@ public class TestClient extends TestClientBase {
     sendWithOverrides(jsonObject, null);
   }
 
+  @Test
   public void testSendWithSingleCC() throws Exception {
     String rec = System.getProperty("user.name") + "@localhost";
     JsonObject jsonObject = new JsonObject().putString("to", rec).putString("cc", rec);
     sendWithOverrides(jsonObject, null);
   }
 
+  @Test
   public void testSendWithCCList() throws Exception {
     String rec = System.getProperty("user.name") + "@localhost";
     JsonArray recipients = new JsonArray(new String[] { rec, rec, rec });
@@ -88,12 +78,14 @@ public class TestClient extends TestClientBase {
     sendWithOverrides(jsonObject, null);
   }
 
+  @Test
   public void testSendWithSingleBCC() throws Exception {
     String rec = System.getProperty("user.name") + "@localhost";
     JsonObject jsonObject = new JsonObject().putString("to", rec).putString("bcc", rec);
     sendWithOverrides(jsonObject, null);
   }
 
+  @Test
   public void testSendWithBCCList() throws Exception {
     String rec = System.getProperty("user.name") + "@localhost";
     JsonArray recipients = new JsonArray(new String[] { rec, rec, rec });
@@ -101,40 +93,47 @@ public class TestClient extends TestClientBase {
     sendWithOverrides(jsonObject, null);
   }
 
+  @Test
   public void testInvalidSingleFrom() throws Exception {
     JsonObject jsonObject = new JsonObject().putString("from", "wqdqwd qwdqwd qwdqwd ");
     sendWithOverrides(jsonObject, "Invalid from");
   }
 
+  @Test
   public void testInvalidSingleRecipient() throws Exception {
     JsonObject jsonObject = new JsonObject().putString("to", "wqdqwd qwdqwd qwdqwd ");
     sendWithOverrides(jsonObject, "Invalid to");
   }
 
+  @Test
   public void testInvalidRecipientList() throws Exception {
     JsonArray recipients = new JsonArray(new String[] { "tim@localhost", "qwdqwd qwdqw d", "qwdkiwqdqwd d" });
     JsonObject jsonObject = new JsonObject().putArray("to", recipients);
     sendWithOverrides(jsonObject, "Invalid to");
   }
 
+  @Test
   public void testNoSubject() throws Exception {
     JsonObject jsonObject = createBaseMessage();
     jsonObject.removeField("subject");
     send(jsonObject, "subject must be specified");
   }
 
+  @Test
   public void testNoBody() throws Exception {
     JsonObject jsonObject = createBaseMessage();
     jsonObject.removeField("body");
     send(jsonObject, "body must be specified");
   }
 
+  @Test
   public void testNoTo() throws Exception {
     JsonObject jsonObject = createBaseMessage();
     jsonObject.removeField("to");
     send(jsonObject, "to address(es) must be specified");
   }
 
+  @Test
   public void testNoFrom() throws Exception {
     JsonObject jsonObject = createBaseMessage();
     jsonObject.removeField("from");
@@ -144,14 +143,13 @@ public class TestClient extends TestClientBase {
   private void sendWithOverrides(JsonObject overrides, final String error) throws Exception {
     Handler<Message<JsonObject>> replyHandler = new Handler<Message<JsonObject>>() {
       public void handle(Message<JsonObject> message) {
-        tu.checkContext();
         if (error == null) {
-          tu.azzert(message.body.getString("status").equals("ok"));
+          assertEquals("ok", message.body.getString("status"));
         } else {
-          tu.azzert(message.body.getString("status").equals("error"));
-          tu.azzert(message.body.getString("message").startsWith(error));
+          assertEquals("error", message.body.getString("status"));
+          assertTrue(message.body.getString("message").startsWith(error));
         }
-        tu.testComplete();
+        testComplete();
       }
     };
     JsonObject jsonObject = createBaseMessage();
@@ -162,14 +160,14 @@ public class TestClient extends TestClientBase {
   private void send(JsonObject message, final String error) throws Exception {
     Handler<Message<JsonObject>> replyHandler = new Handler<Message<JsonObject>>() {
       public void handle(Message<JsonObject> message) {
-        tu.checkContext();
+
         if (error == null) {
-          tu.azzert(message.body.getString("status").equals("ok"));
+          assertEquals("ok", message.body.getString("status"));
         } else {
-          tu.azzert(message.body.getString("status").equals("error"));
-          tu.azzert(message.body.getString("message").startsWith(error));
+          assertEquals("error", message.body.getString("status"));
+          assertTrue(message.body.getString("message").startsWith(error));
         }
-        tu.testComplete();
+        testComplete();
       }
     };
     vertx.eventBus().send("test.mailer", message, replyHandler);
@@ -181,5 +179,6 @@ public class TestClient extends TestClientBase {
         .putString("subject", "This is a test").putString("body", "This is the body\nof the mail");
     return jsonObject;
   }
+
 
 }

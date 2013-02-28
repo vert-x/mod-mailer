@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-load('test_utils.js')
-load('vertx.js')
-
-var tu = new TestUtils();
+load("vertx.js");
+load("vertx_tests.js");
 
 var eb = vertx.eventBus;
 
@@ -33,8 +31,8 @@ function testMailer() {
   }
 
   eb.send("test.mailer", msg, function(msg) {
-    tu.azzert(msg.status == 'ok');
-    tu.testComplete(  );
+    vassert.assertEquals('ok', msg.status);
+    vassert.testComplete();
   });
 }
 
@@ -47,19 +45,13 @@ function testMailerError() {
   }
 
   eb.send("test.mailer", msg, function(msg) {
-    tu.azzert(msg.status == 'error');
-    tu.testComplete();
+    vassert.assertEquals('error', msg.status)
+    vassert.testComplete();
   });
 }
 
-tu.registerTests(this);
-
-var mailerConfig = {address: 'test.mailer'}
-var mailerID = vertx.deployModule('vertx.mailer-v' + java.lang.System.getProperty("vertx.version"), mailerConfig, 1, function() {
-  tu.appReady();
+var mailerConfig = {address: 'test.mailer', fake: true}
+var script = this;
+vertx.deployModule(java.lang.System.getProperty("vertx.modulename"), mailerConfig, 1, function() {
+  initTests(script);
 });
-
-function vertxStop() {
-  tu.unregisterAll();
-  tu.appStopped();
-}
