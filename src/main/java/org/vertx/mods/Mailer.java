@@ -48,6 +48,8 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
   private String address;
   private boolean ssl;
   private String bindAddr;
+  private int connectionTimeout;
+  private int timeout;
   private String host;
   private int port;
   private boolean auth;
@@ -62,6 +64,8 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
     address = getOptionalStringConfig("address", "vertx.mailer");
     ssl = getOptionalBooleanConfig("ssl", false);
     bindAddr = getOptionalStringConfig("bindAddr", "localhost");
+    connectionTimeout = getOptionalIntConfig("connectionTimeout", 120000);
+    timeout = getOptionalIntConfig("timemout", 120000);
     host = getOptionalStringConfig("host", "localhost");
     port = getOptionalIntConfig("port", 25);
     auth = getOptionalBooleanConfig("auth", false);
@@ -76,6 +80,8 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
       Properties props = new Properties();
       props.put("mail.transport.protocol", "smtp");
       props.put("mail.smtp.localaddress", bindAddr);
+      props.put("mail.smtp.connectiontimeout", Integer.toString(connectionTimeout));
+      props.put("mail.smtp.timeout", Integer.toString(timeout));
       props.put("mail.smtp.host", host);
       props.put("mail.smtp.socketFactory.port", Integer.toString(port));
       if (ssl) {
