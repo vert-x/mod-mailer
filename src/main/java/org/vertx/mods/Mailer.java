@@ -28,7 +28,9 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
 import java.util.Date;
 import java.util.Properties;
 
@@ -186,7 +188,28 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
       msg.setRecipients(javax.mail.Message.RecipientType.CC, cc);
       msg.setRecipients(javax.mail.Message.RecipientType.BCC, bcc);
       msg.setSubject(subject);
-      msg.setContent(body, contentType);
+
+      /// Largely based on http://mlyly.wordpress.com/2011/05/13/hello-world/
+      if ("multipart/alternative".equals(contentType)) {
+          // Cover wrap
+          MimeBodyPart wrap = new MimeBodyPart();
+
+          // Alternative TEXT/HTML content
+          MimeMultipart cover = new MimeMultipart("alternative");
+          MimeBodyPart html = new MimeBodyPart();
+          MimeBodyPart text = new MimeBodyPart();
+          cover.addBodyPart(html);
+          cover.addBodyPart(text);
+
+          wrap.setContent(cover);
+          MimeMultipart content = new MimeMultipart("related");
+          msg.setContent(content);
+          content.addBodyPart(wrap);
+
+          html.setContent(body, "text/html");
+      } else {
+          msg.setContent(body, contentType);
+      }
       msg.setSentDate(new Date());
       if (!fake) {
         transport.send(msg);
