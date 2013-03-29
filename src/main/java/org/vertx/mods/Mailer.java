@@ -29,7 +29,9 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
 import java.util.Date;
 import java.util.Properties;
 
@@ -131,8 +133,8 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
       sendOK(message);
     } catch (MessagingException e) {
       sendError(message, e.getMessage(), e);
-    //} catch (Throwable t) {
-     // t.printStackTrace();
+    } catch (Throwable t) {
+      t.printStackTrace();
     }
   }
 
