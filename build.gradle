@@ -58,7 +58,6 @@ test {
   include 'org/foo/**'
   exclude 'org/boo/**'
   */
-
 }
 
 /*

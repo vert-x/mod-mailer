@@ -23,6 +23,7 @@ import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 import javax.mail.MessagingException;
+import javax.mail.internet.AddressException;
 import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
@@ -45,6 +46,9 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
 
   private String address;
   private boolean ssl;
+  private String bindAddr;
+  private int connectionTimeout;
+  private int timeout;
   private String host;
   private int port;
   private boolean auth;
@@ -53,41 +57,49 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
   private String contentType;
   private boolean fake;
 
-  @Override
-  public void start() {
-    super.start();
+  private Properties getProperties()
+  {
     address = getOptionalStringConfig("address", "vertx.mailer");
     ssl = getOptionalBooleanConfig("ssl", false);
+    bindAddr = getOptionalStringConfig("bindAddr", "localhost");
+    connectionTimeout = getOptionalIntConfig("connectionTimeout", 120000);
+    timeout = getOptionalIntConfig("timeout", 120000);
     host = getOptionalStringConfig("host", "localhost");
     port = getOptionalIntConfig("port", 25);
     auth = getOptionalBooleanConfig("auth", false);
     username = getOptionalStringConfig("username", null);
     password = getOptionalStringConfig("password", null);
-    contentType = getOptionalStringConfig("content_type", "text/plain");
     fake = getOptionalBooleanConfig("fake", false);
 
+    Properties props = new Properties();
+    props.put("mail.transport.protocol", "smtp");
+    props.put("mail.smtp.localaddress", bindAddr);
+    props.put("mail.smtp.connectiontimeout", Integer.toString(connectionTimeout));
+    props.put("mail.smtp.timeout", Integer.toString(timeout));
+    props.put("mail.smtp.host", host);
+    props.put("mail.smtp.socketFactory.port", Integer.toString(port));
+    if (ssl) {
+      props.put("mail.smtp.socketFactory.class",
+        "javax.net.ssl.SSLSocketFactory");
+    }
+    props.put("mail.smtp.socketFactory.fallback", Boolean.toString(false));
+    props.put("mail.smtp.auth", Boolean.toString(auth));
+    return props;
+  }
+
+  @Override
+  public void start() {
+    super.start();
+    Properties props = getProperties();
     eb.registerHandler(address, this);
 
     if (!fake) {
-      Properties props = new Properties();
-      props.put("mail.transport.protocol", "smtp");
-      props.put("mail.smtp.host", host);
-      props.put("mail.smtp.socketFactory.port", Integer.toString(port));
-      if (ssl) {
-        props.put("mail.smtp.socketFactory.class",
-          "javax.net.ssl.SSLSocketFactory");
-      }
-      props.put("mail.smtp.socketFactory.fallback", Boolean.toString(false));
-      props.put("mail.smtp.auth", Boolean.toString(auth));
-      //props.put("mail.smtp.quitwait", "false");
-
       session = Session.getInstance(props,
           new javax.mail.Authenticator() {
             protected PasswordAuthentication getPasswordAuthentication() {
               return new PasswordAuthentication(username, password);
             }
           });
-      //session.setDebug(true);
 
       try {
         transport = session.getTransport();
@@ -109,93 +121,18 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
     }
   }
 
-  private InternetAddress[] parseAddresses(Message<JsonObject> message, String fieldName,
-                                           boolean required)
-  {
-    Object oto = message.body.getField(fieldName);
-    if (oto == null) {
-      if (required) {
-        sendError(message, fieldName + " address(es) must be specified");
-      }
-      return null;
-    }
-    try {
-      InternetAddress[] addresses = null;
-      if (oto instanceof String) {
-        addresses = InternetAddress.parse((String)oto, true);
-      } else if (oto instanceof JsonArray) {
-        JsonArray loto = (JsonArray)oto;
-        addresses = new InternetAddress[loto.size()];
-        int count = 0;
-        for (Object addr: loto) {
-          if (addr instanceof String == false) {
-            sendError(message, "Invalid " + fieldName + " field");
-            return null;
-          }
-          InternetAddress[] ia = InternetAddress.parse((String)addr, true);
-          addresses[count++] = ia[0];
-        }
-      }
-      return addresses;
-    } catch (AddressException e) {
-      sendError(message, "Invalid " + fieldName + " field");
-      return null;
-    }
-  }
-
   public void handle(Message<JsonObject> message) {
-
-    String from = message.body.getString("from");
-
-    if (from == null) {
-      sendError(message, "from address must be specified");
-      return;
-    }
-
-    InternetAddress fromAddress;
     try {
-      fromAddress = new InternetAddress(from, true);
-    } catch (AddressException e) {
-      sendError(message, "Invalid from address: " + from, e);
-      return;
-    }
-
-    InternetAddress[] recipients = parseAddresses(message, "to", true);
-    if (recipients == null) {
-      return;
-    }
-    InternetAddress[] cc = parseAddresses(message, "cc", false);
-    InternetAddress[] bcc = parseAddresses(message, "bcc", false);
-
-    String subject = message.body.getString("subject");
-    if (subject == null) {
-      sendError(message, "subject must be specified");
-      return;
-    }
-    String body = message.body.getString("body");
-    if (body == null) {
-      sendError(message, "body must be specified");
-      return;
-    }
-
-    javax.mail.Message msg = new MimeMessage(session);
-
-    try {
-      msg.setFrom(fromAddress);
-      msg.setRecipients(javax.mail.Message.RecipientType.TO, recipients);
-      msg.setRecipients(javax.mail.Message.RecipientType.CC, cc);
-      msg.setRecipients(javax.mail.Message.RecipientType.BCC, bcc);
-      msg.setSubject(subject);
-      msg.setContent(body, contentType);
+      MailerMessage msg = new MailerMessage(session, message.body);
       msg.setSentDate(new Date());
       if (!fake) {
         transport.send(msg);
       }
       sendOK(message);
     } catch (MessagingException e) {
-      sendError(message, "Failed to send message", e);
-    } catch (Throwable t) {
-      t.printStackTrace();
+      sendError(message, e.getMessage(), e);
+    //} catch (Throwable t) {
+     // t.printStackTrace();
     }
   }
 
