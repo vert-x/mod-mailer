@@ -96,7 +96,7 @@ public class MailerTest extends TestVerticle {
   @Test
   public void testInvalidSingleFrom() throws Exception {
     JsonObject jsonObject = new JsonObject().putString("from", "wqdqwd qwdqwd qwdqwd ");
-    sendWithOverrides(jsonObject, "Invalid from");
+    sendWithOverrides(jsonObject, "Invalid from field");
   }
 
   @Test
@@ -179,6 +179,5 @@ public class MailerTest extends TestVerticle {
         .putString("subject", "This is a test").putString("body", "This is the body\nof the mail");
     return jsonObject;
   }
-
 
 }
