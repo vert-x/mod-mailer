@@ -22,6 +22,7 @@ import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
+import java.io.File;
 import javax.mail.MessagingException;
 import javax.mail.internet.AddressException;
 import javax.mail.PasswordAuthentication;
@@ -34,6 +35,15 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 import java.util.Date;
 import java.util.Properties;
+import java.security.KeyFactory;
+import org.apache.commons.codec.binary.Base64;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.spec.KeySpec;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.PrivateKey;
+import de.agitos.dkim.DKIMSigner;
+import de.agitos.dkim.SMTPDKIMMessage;
+import de.agitos.dkim.DKIMSignerException;
 
 /**
  * Mailer Bus Module<p>
@@ -58,6 +68,8 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
   private String password;
   private String contentType;
   private boolean fake;
+  private boolean dkim;
+  private DKIMSigner dkimSigner;
 
   private Properties getProperties()
   {
@@ -89,10 +101,36 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
     return props;
   }
 
+  private void createDKIMSigner(JsonObject dkimObject) {
+    if(dkimObject.size() > 0) {
+      try {
+        String dkimPrivateKey = dkimObject.getString("key");
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        byte[] privateKeyPKCS8 = Base64.decodeBase64(dkimPrivateKey.getBytes());
+        PKCS8EncodedKeySpec privateSpec = new PKCS8EncodedKeySpec(privateKeyPKCS8);
+        RSAPrivateKey privateKey = (RSAPrivateKey) keyFactory.generatePrivate(privateSpec);
+
+        dkimSigner = new DKIMSigner(
+            dkimObject.getString("domain"),
+            dkimObject.getString("selector"),
+            privateKey
+            );
+
+        dkimSigner.setIdentity(dkimObject.getString("identity"));
+        dkim = true;
+      } catch (Exception e) {
+        logger.error(e.getMessage(), e);
+      }
+    }
+  }
+
   @Override
   public void start() {
     super.start();
+
     Properties props = getProperties();
+    createDKIMSigner(getOptionalObjectConfig("dkim", new JsonObject()));
+
     eb.registerHandler(address, this);
 
     if (!fake) {
@@ -125,11 +163,12 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
 
   public void handle(Message<JsonObject> message) {
     try {
-      MailerMessage msg = new MailerMessage(session, message.body);
+      MimeMessage msg = new MailerMessage(session, message.body);
       msg.setSentDate(new Date());
-      if (!fake) {
-        transport.send(msg);
-      }
+
+      if (dkim) msg = new SMTPDKIMMessage(session, msg.getInputStream(), dkimSigner);
+      if (! fake) transport.send(msg);
+
       sendOK(message);
     } catch (MessagingException e) {
       sendError(message, e.getMessage(), e);
