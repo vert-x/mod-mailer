@@ -66,7 +66,6 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
   private boolean auth;
   private String username;
   private String password;
-  private String contentType;
   private boolean fake;
   private boolean dkim;
   private DKIMSigner dkimSigner;
