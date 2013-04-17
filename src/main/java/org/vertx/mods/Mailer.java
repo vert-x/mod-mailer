@@ -112,7 +112,7 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
   private InternetAddress[] parseAddresses(Message<JsonObject> message, String fieldName,
                                            boolean required)
   {
-    Object oto = message.body.getField(fieldName);
+    Object oto = message.body().getField(fieldName);
     if (oto == null) {
       if (required) {
         sendError(message, fieldName + " address(es) must be specified");
@@ -145,7 +145,7 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
 
   public void handle(Message<JsonObject> message) {
 
-    String from = message.body.getString("from");
+    String from = message.body().getString("from");
 
     if (from == null) {
       sendError(message, "from address must be specified");
@@ -167,12 +167,12 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
     InternetAddress[] cc = parseAddresses(message, "cc", false);
     InternetAddress[] bcc = parseAddresses(message, "bcc", false);
 
-    String subject = message.body.getString("subject");
+    String subject = message.body().getString("subject");
     if (subject == null) {
       sendError(message, "subject must be specified");
       return;
     }
-    String body = message.body.getString("body");
+    String body = message.body().getString("body");
     if (body == null) {
       sendError(message, "body must be specified");
       return;

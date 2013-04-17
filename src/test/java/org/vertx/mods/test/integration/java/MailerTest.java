@@ -1,6 +1,8 @@
 package org.vertx.mods.test.integration.java;
 
 import org.junit.Test;
+import org.vertx.java.core.AsyncResult;
+import org.vertx.java.core.AsyncResultHandler;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.eventbus.Message;
@@ -21,10 +23,11 @@ public class MailerTest extends TestVerticle {
   public void start() {
     JsonObject conf = new JsonObject();
     conf.putString("address", "test.mailer").putBoolean("fake", true);
-    container.deployModule(System.getProperty("vertx.modulename"), conf, new Handler<String>() {
+    container.deployModule(System.getProperty("vertx.modulename"), conf, new AsyncResultHandler<String>() {
       @Override
-      public void handle(String deploymentID) {
-        assertNotNull("deploymentID should not be null", deploymentID);
+      public void handle(AsyncResult<String> asyncResult) {
+        assertTrue(asyncResult.succeeded());
+        assertNotNull("deploymentID should not be null", asyncResult.result());
         MailerTest.super.start();
       }
     });
@@ -36,7 +39,7 @@ public class MailerTest extends TestVerticle {
     Handler<Message<JsonObject>> replyHandler = new Handler<Message<JsonObject>>() {
       int count;
       public void handle(Message<JsonObject> message) {
-        assertEquals("ok", message.body.getString("status"));
+        assertEquals("ok", message.body().getString("status"));
         if (++count == numMails) {
           testComplete();
         }
@@ -144,10 +147,10 @@ public class MailerTest extends TestVerticle {
     Handler<Message<JsonObject>> replyHandler = new Handler<Message<JsonObject>>() {
       public void handle(Message<JsonObject> message) {
         if (error == null) {
-          assertEquals("ok", message.body.getString("status"));
+          assertEquals("ok", message.body().getString("status"));
         } else {
-          assertEquals("error", message.body.getString("status"));
-          assertTrue(message.body.getString("message").startsWith(error));
+          assertEquals("error", message.body().getString("status"));
+          assertTrue(message.body().getString("message").startsWith(error));
         }
         testComplete();
       }
@@ -162,10 +165,10 @@ public class MailerTest extends TestVerticle {
       public void handle(Message<JsonObject> message) {
 
         if (error == null) {
-          assertEquals("ok", message.body.getString("status"));
+          assertEquals("ok", message.body().getString("status"));
         } else {
-          assertEquals("error", message.body.getString("status"));
-          assertTrue(message.body.getString("message").startsWith(error));
+          assertEquals("error", message.body().getString("status"));
+          assertTrue(message.body().getString("message").startsWith(error));
         }
         testComplete();
       }

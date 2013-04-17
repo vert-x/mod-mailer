@@ -52,6 +52,6 @@ function testMailerError() {
 
 var mailerConfig = {address: 'test.mailer', fake: true}
 var script = this;
-vertx.deployModule(java.lang.System.getProperty("vertx.modulename"), mailerConfig, 1, function() {
+vertx.deployModule(java.lang.System.getProperty("vertx.modulename"), mailerConfig, 1, function(err, deployID) {
   initTests(script);
 });
