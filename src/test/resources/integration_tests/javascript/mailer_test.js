@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-load("vertx.js");
-load("vertx_tests.js");
+var container = require("container")
+var vertx = require("vertx");
+var vertxTests = require("vertx_tests");
+var vassert = require("vertx_assert");
 
 var eb = vertx.eventBus;
 
@@ -52,6 +54,6 @@ function testMailerError() {
 
 var mailerConfig = {address: 'test.mailer', fake: true}
 var script = this;
-vertx.deployModule(java.lang.System.getProperty("vertx.modulename"), mailerConfig, 1, function(err, deployID) {
-  initTests(script);
+container.deployModule(java.lang.System.getProperty("vertx.modulename"), mailerConfig, 1, function(err, deployID) {
+  vertxTests.startTests(script);
 });
