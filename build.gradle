@@ -67,6 +67,7 @@ Please edit the details below.
  */
 def configurePom(def pom) {
   pom.project {
+    name rootProject.name
     description 'Simple Mailer Module for Vert.x which uses JavaMail'
     inceptionYear '2012'
     packaging 'zip'
