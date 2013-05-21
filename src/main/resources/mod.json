@@ -1,4 +1,10 @@
 {
   "main": "org.vertx.mods.Mailer",
-  "worker": true
+  "worker": true,
+
+  "description":"Simple SMTP mailer module for Vert.x which uses JavaMail",
+  "licenses": ["The Apache Software License Version 2.0"],
+  "author": "purplefox",
+  "keywords": ["mail", "email", "mailer", "smtp", "JavaMail"],
+  "homepage": "https://github.com/vert-x/mod-mailer"
 }
