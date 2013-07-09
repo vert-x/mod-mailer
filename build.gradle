@@ -70,7 +70,7 @@ def configurePom(def pom) {
     name rootProject.name
     description 'Simple Mailer Module for Vert.x which uses JavaMail'
     inceptionYear '2012'
-    packaging produceJar == 'false' ? 'pom' : 'jar'
+    packaging 'jar'
     url 'https://github.com/vert-x/mod-mailer'
 
     developers {
