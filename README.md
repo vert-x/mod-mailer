@@ -64,7 +64,8 @@ To send an email just send a JSON message to the main address of the mailer. The
         "cc": <cc|cc_list>
         "bcc": <bcc|bcc_list>
         "subject": <subject>
-        "body": <body>
+        "body": <body>,
+        "headers": <headers_list>
     }
 
 Where:
@@ -75,6 +76,7 @@ Where:
 * `bcc` to is either a single well formed email address representing a bcc recipient or a JSON array of email addresses representing the bcc list. This field is optional.
 * `subject` is the subject of the email. This field is mandatory.
 * `body` is the body of the email. This field is mandatory.
+* `headers` is a JSON array of JSON object representing the name of an header and it's value. This field is optional.
 
 For example, to send a mail to a single recipient:
 
@@ -92,4 +94,14 @@ Or to send to multiple recipients:
         "to": ["bob@wobble.com", "jane@tribble.com"],
         "subject": "Sadly, my aardvark George, has been arrested.",
         "body": "All, I'm afraid George was found...."
+    }
+
+Or to send to multiple recipients with additional headers:
+
+    {
+        "from": "tim@wibble.com",
+        "to": ["bob@wobble.com", "jane@tribble.com"],
+        "subject": "Sadly, my aardvark George, has been arrested.",
+        "body": "All, I'm afraid George was found....",
+        "headers": [{"name": "X-My-Header","value": "Header's value"}]
     }

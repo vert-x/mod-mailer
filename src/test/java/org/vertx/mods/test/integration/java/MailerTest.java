@@ -1,18 +1,18 @@
 package org.vertx.mods.test.integration.java;
 
+import static org.vertx.testtools.VertxAssert.assertEquals;
+import static org.vertx.testtools.VertxAssert.assertNotNull;
+import static org.vertx.testtools.VertxAssert.assertTrue;
+import static org.vertx.testtools.VertxAssert.testComplete;
+
 import org.junit.Test;
 import org.vertx.java.core.AsyncResult;
 import org.vertx.java.core.AsyncResultHandler;
 import org.vertx.java.core.Handler;
-import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.eventbus.Message;
-import org.vertx.java.core.http.HttpClient;
-import org.vertx.java.core.http.HttpClientResponse;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.testtools.TestVerticle;
-
-import static org.vertx.testtools.VertxAssert.*;
 
 /**
  *
@@ -93,6 +93,25 @@ public class MailerTest extends TestVerticle {
     String rec = System.getProperty("user.name") + "@localhost";
     JsonArray recipients = new JsonArray(new String[] { rec, rec, rec });
     JsonObject jsonObject = new JsonObject().putArray("bcc", recipients);
+    sendWithOverrides(jsonObject, null);
+  }
+  
+  @Test
+  public void testSendWithHeaderList() throws Exception {
+    
+    JsonArray headers = new JsonArray();
+    JsonObject firstHeader = new JsonObject()
+	    .putString("name", "X-My-Custom-Header")
+	    .putString("value", "First header value");
+    JsonObject secondHeader = new JsonObject()
+	    .putString("name", "X-Another-Header")
+	    .putString("value", "Second header value");
+    
+	headers
+		.add(firstHeader)
+		.add(secondHeader);
+	
+	JsonObject jsonObject = new JsonObject().putArray("headers", headers);
     sendWithOverrides(jsonObject, null);
   }
 

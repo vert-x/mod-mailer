@@ -178,6 +178,11 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
       return;
     }
 
+    JsonArray headers = message.body().getArray("headers");
+    if (headers == null) {
+    	headers = new JsonArray();
+    }
+    
     javax.mail.Message msg = new MimeMessage(session);
 
     try {
@@ -188,6 +193,13 @@ public class Mailer extends BusModBase implements Handler<Message<JsonObject>> {
       msg.setSubject(subject);
       msg.setContent(body, contentType);
       msg.setSentDate(new Date());
+      
+      for (Object header : headers) {
+    	  JsonObject jsonHeader = (JsonObject)header;
+    	  if (jsonHeader.getString("name")!=null && jsonHeader.getString("value")!=null);
+    	  	msg.addHeader(jsonHeader.getString("name"), jsonHeader.getString("value"));
+      }
+      
       if (!fake) {
         transport.send(msg);
       }
