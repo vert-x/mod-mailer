@@ -61,9 +61,9 @@ To send an email just send a JSON message to the main address of the mailer. The
     {
         "from": <from>,
         "to": <to|to_list>,
-        "cc": <cc|cc_list>
-        "bcc": <bcc|bcc_list>
-        "subject": <subject>
+        "cc": <cc|cc_list>,
+        "bcc": <bcc|bcc_list>,
+        "subject": <subject>,
         "body": <body>,
         "headers": <headers_list>
     }
