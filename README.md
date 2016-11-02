@@ -1,16 +1,18 @@
-# Mailer
+# Vert.x 2.x is **deprecated** - use instead http://vertx.io/docs/vertx-mail-client/java/
+
+## Mailer
 
 This module allows emails to be sent via SMTP.
 
-## Dependencies
+### Dependencies
 
 This module requires a mail server to be available.
 
-## Name
+### Name
 
 The module name is `mailer`.
 
-## Configuration
+### Configuration
 
 The mailer module requires the following configuration:
 
@@ -54,7 +56,7 @@ Or to a gmail account:
         "password": "password"
     }
 
-## Sending Emails
+### Sending Emails
 
 To send an email just send a JSON message to the main address of the mailer. The JSON message representing the email should have the following structure:
 
